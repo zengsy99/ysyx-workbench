@@ -6,6 +6,7 @@
 !/nanos-lite/*
 !/navy-apps/*
 !/npc/*
+!/verilator-test/*
 !Makefile
 !README.md
 !.gitignore
