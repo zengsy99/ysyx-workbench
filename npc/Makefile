@@ -1,8 +1,8 @@
 all:
 	@echo "Write this Makefile by your self."
 
-sim:
+sim-verilator-tracing-C:
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@echo "Write this Makefile by your self."
+	$(MAKE) -C ../verilator-test/make_tracing_c run
 
 include ../Makefile
