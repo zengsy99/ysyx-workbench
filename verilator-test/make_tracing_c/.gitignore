@@ -1,0 +1,10 @@
+*.dmp
+*.log
+*.csrc
+*.vcd
+obj_*
+logs
+!*.v
+!*.cpp
+!*.vcd
+!Makefile_obj
