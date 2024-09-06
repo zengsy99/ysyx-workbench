@@ -19,8 +19,8 @@
 #include <readline/history.h>
 #include "sdb.h"
 
-#include <utils.h>
-
+//#include <utils.h>
+#include <memory/vaddr.h>
 
 static int is_batch_mode = false;
 
@@ -86,6 +86,25 @@ static int cmd_info(char *args) {
   return 0;
 }
 
+static int cmd_x(char *args) {
+  char *arg1 = strtok(NULL, " ");
+  // Currently we only support the format 'x num addr' format
+  // num is the number of 4 bytes to display
+  int num = atoi(arg1);
+  char *arg2 = strtok(NULL, " ");
+  vaddr_t addr = strtoul(arg2, NULL, 16);
+  printf("Address            Data\n");
+  printf("-----------------------------\n");
+  for (int i = 0; i < num; i++)
+  {
+    word_t data = vaddr_read(addr, 4);
+    printf("0x%-16lx 0x%08lx\n", addr, data);
+    addr+=4;
+  }
+  
+  return 0;
+}
+
 static struct {
   const char *name;
   const char *description;
@@ -98,7 +117,7 @@ static struct {
   /* TODO: Add more commands */
   { "si", "Step instruction exactly", cmd_si },
   { "info", "Generic command for showing things about the program being debugged", cmd_info },
- // { "x", "Examine memory: x/FMT ADDRESS", cmd_x },
+  { "x", "Examine memory: x/FMT ADDRESS", cmd_x },
  // { "p", "Print value of expression EXPR", cmd_p },
  // { "w", "Set a watchpoint for an expression", cmd_w },
  // { "d", "Delete watchpoint", cmd_d },
