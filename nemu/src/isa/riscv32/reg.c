@@ -15,6 +15,7 @@
 
 #include <isa.h>
 #include "local-include/reg.h"
+#include <macro.h>
 
 const char *regs[] = {
   "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
@@ -24,6 +25,17 @@ const char *regs[] = {
 };
 
 void isa_reg_display() {
+  // print pc
+  printf("pc:    0x%016lx\n", cpu.pc);
+
+  // print general register values
+  int regs_num = ARRLEN(regs);
+  printf("Num  %-6s %-16s      Num  %-6s %-16s\n", "Reg", "Value","Reg", "Value");
+  printf("----------------------------------------------------------------\n");
+  for (int i = 0; i < regs_num/2; i++) {
+    printf("%-4d %-6s 0x%016lx", i, regs[i], cpu.gpr[i]);
+    printf("    %-4d %-6s 0x%016lx\n", i + regs_num/2, regs[i+regs_num/2], cpu.gpr[i+regs_num/2]);
+  }
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {

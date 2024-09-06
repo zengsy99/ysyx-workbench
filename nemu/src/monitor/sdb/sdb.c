@@ -21,6 +21,7 @@
 
 #include <utils.h>
 
+
 static int is_batch_mode = false;
 
 void init_regex();
@@ -57,6 +58,34 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+
+static int cmd_si(char *args) {
+  char *arg = strtok(NULL, " ");
+
+  // If no argument is given, execute one instruction.
+  if (arg == NULL) {
+    cpu_exec(1);
+  } else
+  {
+    int i = atoi(arg);
+    cpu_exec(i);
+  }
+  
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  char *arg = strtok(NULL, " ");
+  if (strcmp(arg, "r") == 0) {
+    isa_reg_display();
+  } else if (strcmp(arg, "w") == 0) {
+    //display_wp();
+  } else {
+    printf("Unknown command '%s'\n", arg);
+  }
+  return 0;
+}
+
 static struct {
   const char *name;
   const char *description;
@@ -67,6 +96,16 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
+  { "si", "Step instruction exactly", cmd_si },
+  { "info", "Generic command for showing things about the program being debugged", cmd_info },
+ // { "x", "Examine memory: x/FMT ADDRESS", cmd_x },
+ // { "p", "Print value of expression EXPR", cmd_p },
+ // { "w", "Set a watchpoint for an expression", cmd_w },
+ // { "d", "Delete watchpoint", cmd_d },
+ // { "bt", "Backtrace", cmd_bt },
+ // { "cache", "Display cache information", cmd_cache },
+ // { "tlb", "Display tlb information", cmd_tlb },
+ // { "page", "Display page information", cmd_page
 
 };
 
