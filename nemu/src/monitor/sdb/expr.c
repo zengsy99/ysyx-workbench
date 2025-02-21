@@ -85,6 +85,8 @@ typedef struct token {
 static Token tokens[NR_TOKEN] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
+enum expr_t {BAD_EXPR, GOOD_EXPR}; 
+
 static bool make_token(char *e) {
   int position = 0;
   int i;
@@ -116,8 +118,10 @@ static bool make_token(char *e) {
             memcpy(tokens[nr_token].str, substr_start, substr_len);
             nr_token++;
             break;
-            
 
+          case TK_NOTYPE:
+            break;
+          
           default: 
             tokens[nr_token].type = rules[i].token_type;
             nr_token++;
@@ -137,49 +141,122 @@ static bool make_token(char *e) {
   return true;
 }
 
+/*Determine whether the expression is surrounded by a pair of matching parentheses, 
+  and also check whether the left and right parentheses of the expression match.*/
+bool check_parenthesis(int p, int q){
+  assert(p<q);
+  if (tokens[p].type != '(' || tokens[q].type != ')')
+  {
+    return false;
+  }
+  int cnt = 0;
+  for(int i = p; i <= q; i++){
+    if (tokens[i].type == '(')
+      cnt++;
+    else if (tokens[i].type == ')')
+      cnt--; 
+
+    if(cnt == 0 && i != q)
+      return false;
+  }
+
+  assert(cnt == 0);
+  return true;
+}
+
+/*Find the primary operator in the expression*/
+int find_op(int p, int q){
+  assert(p<q);
+  int parenthrsis_cnt = 0;
+  int op = -1;
+  for (int i = p; i <= q; i++)
+  {
+    if (tokens[i].type == '(')
+    {
+      parenthrsis_cnt++;
+    } else if (tokens[i].type == ')')
+    {
+      parenthrsis_cnt--;
+    } else
+    {
+      if (parenthrsis_cnt == 0){
+        /*Ensure the op is not inside a pair of parenthesis*/
+        if (tokens[i].type == '+' || tokens[i].type == '-')
+        {
+          op = i;
+        } else if(tokens[i].type == '*' || tokens[i].type == '/')
+        {
+          if(op == -1 || (tokens[op].type != '+' && tokens[op].type != '-'))
+          {
+            /*Ensure the primary operator's priority is lowest*/
+            op = i;
+          }
+        }
+      }
+    }
+  }
+  return op;
+}
+
+enum expr_t eval(int p, int q, int* result){
+  assert(p <= q);
+  if (p == q)
+  {
+    assert(tokens[p].type == TK_NUM);
+    *result = atoi(tokens[p].str);
+    return GOOD_EXPR;
+  } else if (check_parenthesis(p, q) == true)
+  {
+    printf("Delete one pair of parenthesis\n");
+    return eval(p+1, q-1, result);
+  } else{
+    int op_position = find_op(p, q);
+    printf("p=%d, q=%d, op_position=%d\n", p, q, op_position);
+    assert(p <= op_position && op_position <= q);
+
+    int left_result, right_result;
+    enum expr_t left_ret = eval(p, op_position - 1, &left_result);
+    enum expr_t right_ret = eval(op_position + 1, q, &right_result);
+
+    assert(left_ret == GOOD_EXPR && right_ret == GOOD_EXPR);
+
+    switch (tokens[op_position].type)
+    {
+    case '+':
+      /* code */
+      *result = left_result + right_result;
+      break;
+    case '-':
+      *result = left_result - right_result;
+      break;
+    case '*':
+      *result = left_result * right_result;
+      break;
+    case '/':
+      assert(right_result != 0);
+      *result = left_result / right_result;
+      break;
+    default:
+      assert(0);
+      break;
+    }
+  }
+
+  return GOOD_EXPR;
+  
+}
 
 word_t expr(char *e, bool *success) {
+  printf("The expression is %s\n", e);
   if (!make_token(e)) {
     *success = false;
     return 0;
   }
-
-  /* TODO: Insert codes to evaluate the expression. */
-  printf("The origin string is %s.\n", e);
-  printf("The token of origin string is ");
-  for (int i = 0; i < nr_token; i++)
-  {
-    switch (tokens[i].type)
-    {
-    case '(':
-      printf("( ");
-      break;
-    case ')':
-      printf(") ");
-      break;
-    case '+':
-      /* code */
-      printf("+ ");
-      break;
-    case '-':
-      printf("- ");
-      break;
-    case '*':
-      printf("* ");
-      break;
-    case '/':
-      printf("/ ");
-    case TK_EQ:
-      printf("== ");
-      break;
-        
-    default:
-      printf("%s ", tokens[i].str);
-      break;
-    }
-  }
-  printf("\n");
-  
+  int result;
+  enum expr_t ret = eval(0, nr_token - 1, &result);
+  assert(ret == GOOD_EXPR);
+  *success = true;
+  printf("The result of the expression is %d\n", result);
 
   return 0;
 }
