@@ -198,6 +198,8 @@ void sdb_mainloop() {
 void init_sdb() {
   /* Compile the regular expressions. */
   init_regex();
+  bool success;
+  expr("(1 + 8)  * 30 -7", &success);
 
   /* Initialize the watchpoint pool. */
   init_wp_pool();

@@ -19,14 +19,18 @@
  * Type 'man regex' for more information about POSIX regex functions.
  */
 #include <regex.h>
+#include <string.h>
+#include <common.h>
 
+/*The type of token*/
 enum {
   TK_NOTYPE = 256, TK_EQ,
-
+  TK_NUM,
   /* TODO: Add more token types */
 
 };
 
+/*Define the type and relevant rule of every regular experession*/
 static struct rule {
   const char *regex;
   int token_type;
@@ -38,7 +42,13 @@ static struct rule {
 
   {" +", TK_NOTYPE},    // spaces
   {"\\+", '+'},         // plus
+  {"-", '-'},           // minus
+  {"\\*", '*'},         // multiply
+  {"/", '/'},           // divide
   {"==", TK_EQ},        // equal
+  {"\\(", '('},         // left parenthesis
+  {"\\)", ')'},         // right parenthesis
+  {"[0-9]+", TK_NUM},   // number
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -54,6 +64,7 @@ void init_regex() {
   int ret;
 
   for (i = 0; i < NR_REGEX; i ++) {
+    /* Transfer the regular experession of string format into binary format*/
     ret = regcomp(&re[i], rules[i].regex, REG_EXTENDED);
     if (ret != 0) {
       regerror(ret, &re[i], error_msg, 128);
@@ -62,12 +73,16 @@ void init_regex() {
   }
 }
 
+#define TOKEN_LEN 32
 typedef struct token {
   int type;
-  char str[32];
+  char str[TOKEN_LEN];
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
+#define NR_TOKEN 32
+
+/*Store the parsed tokens*/
+static Token tokens[NR_TOKEN] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -93,9 +108,20 @@ static bool make_token(char *e) {
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
+        Assert(nr_token <= NR_TOKEN, "Token array has been full!");
+        switch (rules[i].token_type) {          
+          case TK_NUM:
+            Assert(substr_len <= TOKEN_LEN, "The length of token of TK_NUM is too long.");
+            tokens[nr_token].type = rules[i].token_type;
+            memcpy(tokens[nr_token].str, substr_start, substr_len);
+            nr_token++;
+            break;
+            
 
-        switch (rules[i].token_type) {
-          default: TODO();
+          default: 
+            tokens[nr_token].type = rules[i].token_type;
+            nr_token++;
+            break;
         }
 
         break;
@@ -119,7 +145,41 @@ word_t expr(char *e, bool *success) {
   }
 
   /* TODO: Insert codes to evaluate the expression. */
-  TODO();
+  printf("The origin string is %s.\n", e);
+  printf("The token of origin string is ");
+  for (int i = 0; i < nr_token; i++)
+  {
+    switch (tokens[i].type)
+    {
+    case '(':
+      printf("( ");
+      break;
+    case ')':
+      printf(") ");
+      break;
+    case '+':
+      /* code */
+      printf("+ ");
+      break;
+    case '-':
+      printf("- ");
+      break;
+    case '*':
+      printf("* ");
+      break;
+    case '/':
+      printf("/ ");
+    case TK_EQ:
+      printf("== ");
+      break;
+        
+    default:
+      printf("%s ", tokens[i].str);
+      break;
+    }
+  }
+  printf("\n");
+  
 
   return 0;
 }
