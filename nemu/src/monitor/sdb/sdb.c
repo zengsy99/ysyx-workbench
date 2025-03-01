@@ -199,7 +199,7 @@ void init_sdb() {
   /* Compile the regular expressions. */
   init_regex();
   bool success;
-  expr("(5 - ((    1 +  8)*   30-     7))", &success);
+  expr("-3+-+5 + ---(-2-+-7)", &success);
 
   /* Initialize the watchpoint pool. */
   init_wp_pool();

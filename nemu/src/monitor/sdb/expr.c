@@ -24,8 +24,9 @@
 
 /*The type of token*/
 enum {
-  TK_NOTYPE = 256, TK_EQ,
+  TK_NOTYPE = 256, TK_EQ, TK_POS, TK_NEG,
   TK_NUM,
+  TK_NUM_NEG,
   /* TODO: Add more token types */
 
 };
@@ -122,6 +123,19 @@ static bool make_token(char *e) {
           case TK_NOTYPE:
             break;
           
+
+          case '+': case '-':
+            if (nr_token != 0 && (tokens[nr_token-1].type == TK_NUM || tokens[nr_token-1].type == ')'))
+            {
+              tokens[nr_token].type = rules[i].token_type;
+              nr_token++;
+            } else
+            {
+              tokens[nr_token].type = (rules[i].token_type == '+') ? TK_POS : TK_NEG;
+              nr_token++;
+            }
+            break;
+          
           default: 
             tokens[nr_token].type = rules[i].token_type;
             nr_token++;
@@ -202,10 +216,40 @@ enum expr_t eval(int p, int q, int* result){
   assert(p <= q);
   if (p == q)
   {
-    assert(tokens[p].type == TK_NUM);
-    *result = atoi(tokens[p].str);
+    assert(tokens[p].type == TK_NUM || tokens[p].type == TK_NUM_NEG);
+    *result = (tokens[p].type == TK_NUM) ? atoi(tokens[p].str) : -atoi(tokens[p].str);
     return GOOD_EXPR;
-  } else if (check_parenthesis(p, q) == true)
+  } 
+  else if(tokens[p].type == TK_POS || tokens[p].type == TK_NEG){
+    assert(p<q);
+    bool sign_of_num = true;
+    for (; p <= q; p++)
+    {
+      if (tokens[p].type == TK_POS)
+      {
+        continue;
+      }
+      else if (tokens[p].type == TK_NEG)
+      {
+        sign_of_num = !sign_of_num;
+        continue;  
+      }
+      assert(tokens[p].type == TK_NUM || tokens[p].type == '(');
+      break;
+    }
+    if (tokens[p].type == TK_NUM)
+    {
+      tokens[p].type = (sign_of_num == true) ? TK_NUM : TK_NUM_NEG;
+      return eval(p, q,result);
+    }
+    else{
+      enum expr_t ret = eval(p, q, result);
+      *result = (sign_of_num == true) ? *result : -(*result);
+      return ret;
+    }
+    
+  }
+  else if (check_parenthesis(p, q) == true)
   {
     printf("Delete one pair of parenthesis\n");
     return eval(p+1, q-1, result);
